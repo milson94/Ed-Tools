@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edmilson's Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col min-h-screen bg-gray-100">
+    <!-- Navigation Bar -->
+    <nav class="bg-[#052E87] text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{{ url_for('home') }}" class="text-xl font-bold">Edmilson's Tools</a>
+            <div class="space-x-4">
+                <a href="{{ url_for('home') }}" class="hover:text-gray-300">Home</a>
+                {% if not session.get('logged_in') %}
+                    <a href="{{ url_for('login') }}" class="hover:text-gray-300">Login</a>
+                    <a href="{{ url_for('register') }}" class="hover:text-gray-300">Register</a>
+                {% else %}
+                    <a href="{{ url_for('logout') }}" class="hover:text-gray-300">Logout</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content Block -->
+    <div class="flex-grow container mx-auto p-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-[#052E87] text-white text-center p-4">
+        <p>&copy; 2023 Edmilson's Tools. All rights reserved.</p>
+    </footer>
+</body>
+</html>

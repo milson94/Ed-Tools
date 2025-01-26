@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-[#052E87] mb-4">Report To Footer</h1>
+    <p class="text-gray-700">A tool to generate reports and add them to the footer.</p>
+
+    <!-- Report To Footer Form -->
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <!-- PDF Files Upload -->
+        <div>
+            <label for="pdf_files" class="block text-gray-700">Upload PDF files:</label>
+            <input type="file" id="pdf_files" name="pdf_files" multiple accept=".pdf" required
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#052E87]">
+        </div>
+
+        <!-- Footer Image Upload -->
+        <div>
+            <label for="footer_image" class="block text-gray-700">Upload Footer Image (PNG):</label>
+            <input type="file" id="footer_image" name="footer_image" accept=".png" required
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#052E87]">
+        </div>
+
+        <!-- Generate Button -->
+        <button type="submit"
+                class="w-full bg-[#052E87] text-white py-2 rounded-lg hover:bg-[#041f5e] transition duration-300">
+            GENERATE NEW DOC
+        </button>
+    </form>
+</div>
+{% endblock %}
