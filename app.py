@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 import os
 from report_to_footer_logic import add_footer_to_pdfs  # Import the logic function
+from pdf_merger_logic import merge_pdfs  # Import the PDF Merger logic function
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -85,8 +86,33 @@ def report_to_footer():
 
     return render_template('report_to_footer.html')
 
-@app.route('/pdf-merger')
+@app.route('/pdf-merger', methods=['GET', 'POST'])
 def pdf_merger():
+    if request.method == 'POST':
+        # Check if files are uploaded
+        if 'pdf_files' not in request.files:
+            flash('No files uploaded!', 'danger')
+            return redirect(url_for('pdf_merger'))
+
+        pdf_files = request.files.getlist('pdf_files')
+
+        # Validate files
+        if not pdf_files:
+            flash('Invalid files uploaded!', 'danger')
+            return redirect(url_for('pdf_merger'))
+
+        # Get the output filename or use a default name
+        output_filename = request.form.get('output_filename', 'merged.pdf')
+
+        # Call the logic function to merge the PDFs
+        try:
+            final_output_path = merge_pdfs(pdf_files, output_filename, app.config['UPLOAD_FOLDER'])
+            flash('PDFs merged successfully!', 'success')
+            return send_file(final_output_path, as_attachment=True)
+        except Exception as e:
+            flash(f'An error occurred: {str(e)}', 'danger')
+            return redirect(url_for('pdf_merger'))
+
     return render_template('pdf_merger.html')
 
 @app.route('/image-to-pdf')

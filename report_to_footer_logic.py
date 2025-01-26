@@ -1,8 +1,8 @@
 from PyPDF2 import PdfReader, PdfWriter
-from reportlab.lib.pagesizes import A4  # Use A4 page size
+from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 
 def add_footer_to_pdfs(pdf_files, footer_image, upload_folder):
@@ -10,8 +10,10 @@ def add_footer_to_pdfs(pdf_files, footer_image, upload_folder):
     footer_path = os.path.join(upload_folder, 'footer.png')
     footer_image.save(footer_path)
 
-    # Get the dimensions of the footer image
+    # Open the footer image with Pillow to handle transparency
     with Image.open(footer_path) as img:
+        # Ensure the image has an alpha channel (transparency)
+        img = img.convert("RGBA")
         footer_width, footer_height = img.size
 
     # Process each PDF file
@@ -26,22 +28,34 @@ def add_footer_to_pdfs(pdf_files, footer_image, upload_folder):
             for page in pdf_reader.pages:
                 # Create a new PDF page with the footer
                 packet = BytesIO()
-                can = canvas.Canvas(packet, pagesize=A4)  # Use A4 page size
+                can = canvas.Canvas(packet, pagesize=A4)
 
                 # Calculate the position for the footer
                 page_width, page_height = A4
                 footer_scale = page_width / footer_width  # Scale footer to fit page width
                 scaled_footer_height = footer_height * footer_scale
 
-                # Draw the footer at the bottom of the page
+                # Create a blank image with transparency
+                blank_image = Image.new("RGBA", (int(page_width), int(scaled_footer_height)), (0, 0, 0, 0))
+                # Resize the footer image to fit the page width
+                resized_footer = img.resize((int(page_width), int(scaled_footer_height)), Image.Resampling.LANCZOS)
+                # Composite the footer onto the blank image
+                blank_image.paste(resized_footer, (0, 0), resized_footer)
+
+                # Save the composited image as a temporary file
+                temp_footer_path = os.path.join(upload_folder, 'temp_footer.png')
+                blank_image.save(temp_footer_path, "PNG")
+
+                # Draw the composited image onto the PDF
+                # Adjust the X-axis position by 5 pixels to the right
+                x_position = 5  # Move 5px to the right
                 can.drawImage(
-                    footer_path,
-                    0,  # X position (left-aligned)
+                    temp_footer_path,
+                    x_position,  # Adjusted X position
                     0,  # Y position (bottom-aligned)
                     width=page_width,  # Scale footer to fit page width
                     height=scaled_footer_height,  # Maintain aspect ratio
-                    preserveAspectRatio=True,  # Prevent squashing
-                    anchor='sw'  # Anchor to the bottom-left corner
+                    mask='auto'  # Preserve transparency
                 )
                 can.save()
 
@@ -50,6 +64,9 @@ def add_footer_to_pdfs(pdf_files, footer_image, upload_folder):
                 footer_pdf = PdfReader(packet)
                 page.merge_page(footer_pdf.pages[0])
                 pdf_writer.add_page(page)
+
+                # Clean up the temporary footer file
+                os.remove(temp_footer_path)
 
             # Save the modified PDF
             output_path = os.path.join(upload_folder, f'modified_{pdf_file.filename}')
